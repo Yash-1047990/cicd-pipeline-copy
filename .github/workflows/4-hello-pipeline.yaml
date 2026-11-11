@@ -7,28 +7,33 @@ on:
 
 jobs:
   hello-pipeline-job:
-    if: false
+    if: true
     runs-on: ubuntu-latest
     env:
       PYTHONPATH: ${{ github.workspace }}/src
+# kopieer de repo naar de server
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 
 
+#instaleer python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+# installeer de dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install fastapi uvicorn pytest requests
 
+# als dit niet goed is dan stopt hij!!
       - name: Run unit tests
         run: |
           pytest -v unit-testing
 
+# de  server starten
       - name: Start server
         run: |
           nohup python -u src/api/server.py >/dev/null 2>&1 &
@@ -42,12 +47,14 @@ jobs:
           echo "pipeline failed: server did not start" > result.txt
           exit 1
 
+# syteem testen en endpoint testen
       - name: Run system tests
         run: |
           if ! pytest -v system-testing; then
             echo "pipeline failed: some system tests did not pass (see the \"Run system tests\" step log for details)" > result.txt
             exit 1
           fi
+
 
       - name: Upload failure report
         if: failure()
